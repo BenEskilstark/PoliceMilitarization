@@ -1,0 +1,16 @@
+
+- - - - - - TODO - - - - - -
+  - get data into a local SQL
+  - figure out client-server relationship
+    - can I access sqlite via js?
+    - how to handle http requests in python otherwise?
+  - types of queries to support
+    - return basic list by location
+    - return locations that have certain equipment
+    - total costs (could be sum of columns)
+    - date ranges
+  - frontend
+    - tokenized inputs
+    - tabular output
+  - heroku deployment
+  - standalone URL
