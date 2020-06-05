@@ -1,0 +1,10 @@
+{
+  presets: ["flow", "es2015"],
+  plugins: [
+    "transform-react-jsx",
+    "transform-object-rest-spread",
+  ],
+  ignore: [
+    "./js/levels",
+  ],
+}

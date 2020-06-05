@@ -1,3 +1,4 @@
+import csv
 from sqlUtils import SqlTable, SqlRow
 
 '''
@@ -34,34 +35,42 @@ class PoliceRawTable(object):
             'ui': 'text', # not sure what this stands for,
                           # indicates what the quantity value is
                           # refering to, e.g. 'Each', 'Box', 'Dozen'
-            'acquisition_value': 'real',
+            'acquisition_value': 'text',
             'ship_date': 'text',
         }
         self.table_name = 'police'
         self.table = SqlTable(self.table_name, columns)
 
+    # all the csv file names are compiled together in the given file
+    # then loop through each and insert their data into the table
+    def insert_all_state_data(self, files_list='stateFileNames.txt'):
+        f = open(files_list, 'r')
+        for file_name in f:
+            print('inserting data from ' + file_name.strip())
+            self.insert_by_state(file_name.strip())
+        f.close()
+
+
     # each state/territory is a different csv. This function
     # will load one of them at a time and insert it into the table
-    # The file names for states are weird (and some are misspelled!)
-    # so just provide the file name instead of trying to match
-    # a state name to the correct file
-    def insert_by_state(self, state_file_name):
-        csv = open(state_file_name, 'r')
-        for line in csv:
-            values = line.split(',')
+    def insert_by_state(self, state):
+        csv_name = '../csv/' + state
+        f = open(csv_name, 'r')
+        csv_reader = csv.reader(f)
+        for line in csv_reader:
             acq_row = SqlRow(self.table_name, {
-                'state': values[0],
-                'state_name': values[1],
-                'nsn': values[2],
-                'item_name': values[3],
-                'quantity': values[4],
-                'ui': values[5],
-                'acquisition_value': values[6],
-                'demil_code': values[7],
-                'demil_ic': values[8],
-                'ship_date': values[9],
-                'station_type': values[10],
+                'state': line[0],
+                'station_name': line[1],
+                'nsn': line[2],
+                'item_name': line[3],
+                'quantity': line[4],
+                'ui': line[5],
+                'acquisition_value': line[6],
+                'demil_code': line[7],
+                'demil_ic': line[8],
+                'ship_date': line[9],
+                'station_type': line[10],
             })
             self.table.insert(acq_row)
 
-        csv.close()
+        f.close()

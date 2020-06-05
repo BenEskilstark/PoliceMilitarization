@@ -1,16 +1,26 @@
 
 - - - - - - TODO - - - - - -
-  - get data into a local SQL
-  - figure out client-server relationship
-    - can I access sqlite via js?
-    - how to handle http requests in python otherwise?
-  - types of queries to support
-    - return basic list by location
-    - return locations that have certain equipment
-    - total costs (could be sum of columns)
-    - date ranges
   - frontend
-    - tokenized inputs
-    - tabular output
+    - header
+      - title
+      - link to data
+      - link to github
+    - total costs (sum of columns on frontend)
+  - server side
+    - don't let server die on bad queries, etc.
+    - make postgres queries read only
   - heroku deployment
+    - configure procfile and postgres
   - standalone URL
+
+- - - - - BUGS - - - - - -
+  - searching for specific items should be reset when switching locations
+
+- - - - - NICE TO HAVE - - - - - -
+  - text search in the dropdowns
+  - sorting columns
+  - do I need a derived sql table that merges rows?
+  - query by date ranges
+  - allow updating db live
+  - cache data on the frontend
+  - pagination

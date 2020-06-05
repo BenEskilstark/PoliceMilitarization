@@ -1,0 +1,4 @@
+load database
+  from sqlite:///Users/ben/Code/PoliceMilitarization/sql_scripts/testdb
+  into postgresql:///postgres
+  with create tables;

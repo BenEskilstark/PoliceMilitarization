@@ -1,0 +1,38 @@
+{
+  "name": "policemilitarization",
+  "version": "1.0.0",
+  "description": "Compiling publicly accessible data about police acquisitions of military material",
+  "main": "index.js",
+  "scripts": {
+    "flow": "flow",
+    "babel": "babel",
+    "browserify": "browserify",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BenEskildsen/PoliceMilitarization.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BenEskildsen/PoliceMilitarization/issues"
+  },
+  "homepage": "https://github.com/BenEskildsen/PoliceMilitarization#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "flow-bin": "^0.126.1"
+  },
+  "dependencies": {
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-flow": "^6.23.0",
+    "pg": "^8.2.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "sqlite3": "^4.2.0"
+  }
+}
