@@ -1,14 +1,18 @@
 
 - - - - - - TODO - - - - - -
   - standalone URL
+  - list number of rows (/total quantity?) alongside equipment value
 
 
 - - - - - BUGS - - - - - -
+  - switching between states when item is selected returns no data
+  - remove useless "12:00:00 AM" from all the ship dates
   - react complains about lack of keys
   - DOM complains about bad table nesting
 
 
 - - - - - NICE TO HAVE - - - - - -
+  - put query params in the URI so that you can send the page as a link
   - metrics around page loads/distinct users
   - text search in the dropdowns
   - sorting columns
