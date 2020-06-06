@@ -1,26 +1,20 @@
 
 - - - - - - TODO - - - - - -
-  - frontend
-    - header
-      - title
-      - link to data
-      - link to github
-    - total costs (sum of columns on frontend)
-  - server side
-    - don't let server die on bad queries, etc.
-    - make postgres queries read only
-  - heroku deployment
-    - configure procfile and postgres
   - standalone URL
 
+
 - - - - - BUGS - - - - - -
-  - searching for specific items should be reset when switching locations
+  - react complains about lack of keys
+  - DOM complains about bad table nesting
+
 
 - - - - - NICE TO HAVE - - - - - -
+  - metrics around page loads/distinct users
   - text search in the dropdowns
   - sorting columns
-  - do I need a derived sql table that merges rows?
+  - do I need a derived sql table that merges otherwise-duplicate rows?
   - query by date ranges
-  - allow updating db live
+  - scripting for updating db
   - cache data on the frontend
   - pagination
+  - redis

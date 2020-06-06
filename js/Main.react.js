@@ -9,22 +9,23 @@ const {useEffect, useMemo, useState} = React;
 type Props = {};
 
 const headerStyle = {
-
+  textAlign: 'center',
+  // backgroundColor: 'lightgray',
 };
 const queryStyle = {
-  position: 'fixed',
   top: 0,
   left: 0,
   padding: '2px',
   paddingLeft: '4px',
-  backgroundColor: 'lightgray',
+  // backgroundColor: 'lightgray',
   width: '100%',
   borderBottom: '1px solid black',
   boxShadow: '0 1px #555555',
   zIndex: 1,
 };
 const tableStyle = {
-  position: 'absolute',
+  backgroundColor: '#faf8ef',
+  width: '100%',
 };
 
 function Main(props: Props): React.Node {
@@ -60,7 +61,7 @@ function Main(props: Props): React.Node {
   // load list of items whenever selected state or station changes
   useEffect(() => {
     if (filters.state == null) return;
-    const queryParams = filtersToQueryParams(filters);
+    const queryParams = filtersToQueryParams({...filters, item_name: null});
     getFromServer(`/distinct/item_name${queryParams}`, (resp) => {
       const rows = JSON.parse(resp).rows;
       const items = rows.map(obj => obj.item_name);
@@ -72,8 +73,50 @@ function Main(props: Props): React.Node {
   // results
   const [queryResult, setQueryResult] = useState(null);
 
+  // total cost of equipment is the cost of each line-item * the quantity for that line
+  const totalCost = useMemo(() => {
+    if (queryResult == null || queryResult.rows == null) return 0;
+    let cost = 0;
+    queryResult.rows.forEach(row => {
+      cost += (
+        parseFloat(row.acquisition_value.slice(1).replace(/,/g,'')) *
+        parseFloat(row.quantity.replace(/,/g,''))
+      );
+    });
+    return cost;
+  }, [queryResult]);
+
   return (
     <div>
+      <div style={headerStyle}>
+        <h1>Police Militarization</h1>
+        <h3
+          style={{
+            margin: 'auto',
+            maxWidth: '900px',
+            fontWeight: 'normal',
+          }}
+        >
+          The Defense Logistics Agency transfers excess Department of Defense equipment
+          to federal, state, and local law enforcement agencies in the United States.
+          The records of these transfers are public information.
+          Use this website to explore what equipment has been delivered to what police
+          departments, or which police departments have been transferred particular kinds of
+          equipment.
+        </h3>
+        <p></p>
+        <h3>
+          <a target="_blank"
+            href="https://www.dla.mil/DispositionServices/Offers/Reutilization/LawEnforcement/PublicInformation/">
+          Original Data Source</a>
+          <div></div>
+          <a target="_blank"
+            href="https://github.com/BenEskildsen/PoliceMilitarization"
+           >
+            Source code for this page
+          </a>
+        </h3>
+      </div>
       <div style={queryStyle} id="search">
         State:
         <Dropdown
@@ -91,6 +134,7 @@ function Main(props: Props): React.Node {
             setFilters({...filters, station_name: nextStation});
           }}
         />
+        Equipment Type:
         <Dropdown
           options={['ALL', ...items]}
           selected={filters.item_name}
@@ -107,6 +151,9 @@ function Main(props: Props): React.Node {
             })
           }}
         />
+        <div>
+          Total Value of Searched Equipment: <b>${totalCost.toLocaleString()}</b>
+        </div>
       </div>
       <Table queryResult={queryResult} />
     </div>
@@ -120,9 +167,8 @@ function Table(props) {
   }
 
   // derive positioning
-  const searchBarHeight = document.getElementById('search')
-    .getBoundingClientRect()
-    .height;
+  const rect = document.getElementById('search').getBoundingClientRect();
+  const searchBarOffset = rect.top + rect.height;
 
   const {rows} = queryResult;
   const rowHTML = rows.map(row => {
@@ -139,12 +185,8 @@ function Table(props) {
     );
   });
   return (
-    <div style={{
-      position: 'absolute',
-      top: searchBarHeight + 'px',
-      width: '100%',
-    }}>
-      <table style= {{
+    <div style={tableStyle}>
+      <table style={{
         width: '100%',
       }}>
         <tr>
@@ -166,7 +208,7 @@ function filtersToQueryParams(filters) {
   let queryParams = '?';
   const cols = Object.keys(filters);
   for (let i = 0; i < cols.length; i++) {
-    if (filters[cols[i]] == 'ALL') {
+    if (filters[cols[i]] == 'ALL' || filters[cols[i]] == null) {
       continue;
     }
     queryParams += cols[i] + '=' + filters[cols[i]];

@@ -16,21 +16,24 @@ var useEffect = React.useEffect,
     useState = React.useState;
 
 
-var headerStyle = {};
+var headerStyle = {
+  textAlign: 'center'
+  // backgroundColor: 'lightgray',
+};
 var queryStyle = {
-  position: 'fixed',
   top: 0,
   left: 0,
   padding: '2px',
   paddingLeft: '4px',
-  backgroundColor: 'lightgray',
+  // backgroundColor: 'lightgray',
   width: '100%',
   borderBottom: '1px solid black',
   boxShadow: '0 1px #555555',
   zIndex: 1
 };
 var tableStyle = {
-  position: 'absolute'
+  backgroundColor: '#faf8ef',
+  width: '100%'
 };
 
 function Main(props) {
@@ -88,7 +91,7 @@ function Main(props) {
   // load list of items whenever selected state or station changes
   useEffect(function () {
     if (filters.state == null) return;
-    var queryParams = filtersToQueryParams(filters);
+    var queryParams = filtersToQueryParams(_extends({}, filters, { item_name: null }));
     getFromServer('/distinct/item_name' + queryParams, function (resp) {
       var rows = JSON.parse(resp).rows;
       var items = rows.map(function (obj) {
@@ -105,9 +108,60 @@ function Main(props) {
       queryResult = _useState10[0],
       setQueryResult = _useState10[1];
 
+  // total cost of equipment is the cost of each line-item * the quantity for that line
+
+
+  var totalCost = useMemo(function () {
+    if (queryResult == null || queryResult.rows == null) return 0;
+    var cost = 0;
+    queryResult.rows.forEach(function (row) {
+      cost += parseFloat(row.acquisition_value.slice(1).replace(/,/g, '')) * parseFloat(row.quantity.replace(/,/g, ''));
+    });
+    return cost;
+  }, [queryResult]);
+
   return React.createElement(
     'div',
     null,
+    React.createElement(
+      'div',
+      { style: headerStyle },
+      React.createElement(
+        'h1',
+        null,
+        'Police Militarization'
+      ),
+      React.createElement(
+        'h3',
+        {
+          style: {
+            margin: 'auto',
+            maxWidth: '900px',
+            fontWeight: 'normal'
+          }
+        },
+        'The Defense Logistics Agency transfers excess Department of Defense equipment to federal, state, and local law enforcement agencies in the United States. The records of these transfers are public information. Use this website to explore what equipment has been delivered to what police departments, or which police departments have been transferred particular kinds of equipment.'
+      ),
+      React.createElement('p', null),
+      React.createElement(
+        'h3',
+        null,
+        React.createElement(
+          'a',
+          { target: '_blank',
+            href: 'https://www.dla.mil/DispositionServices/Offers/Reutilization/LawEnforcement/PublicInformation/' },
+          'Original Data Source'
+        ),
+        React.createElement('div', null),
+        React.createElement(
+          'a',
+          { target: '_blank',
+            href: 'https://github.com/BenEskildsen/PoliceMilitarization'
+          },
+          'Source code for this page'
+        )
+      )
+    ),
     React.createElement(
       'div',
       { style: queryStyle, id: 'search' },
@@ -127,6 +181,7 @@ function Main(props) {
           setFilters(_extends({}, filters, { station_name: nextStation }));
         }
       }),
+      'Equipment Type:',
       React.createElement(Dropdown, {
         options: ['ALL'].concat(_toConsumableArray(items)),
         selected: filters.item_name,
@@ -142,7 +197,18 @@ function Main(props) {
             setQueryResult(JSON.parse(res));
           });
         }
-      })
+      }),
+      React.createElement(
+        'div',
+        null,
+        'Total Value of Searched Equipment: ',
+        React.createElement(
+          'b',
+          null,
+          '$',
+          totalCost.toLocaleString()
+        )
+      )
     ),
     React.createElement(Table, { queryResult: queryResult })
   );
@@ -156,7 +222,8 @@ function Table(props) {
   }
 
   // derive positioning
-  var searchBarHeight = document.getElementById('search').getBoundingClientRect().height;
+  var rect = document.getElementById('search').getBoundingClientRect();
+  var searchBarOffset = rect.top + rect.height;
 
   var rows = queryResult.rows;
 
@@ -187,12 +254,12 @@ function Table(props) {
       React.createElement(
         'td',
         null,
-        row.ui
+        row.acquisition_value
       ),
       React.createElement(
         'td',
         null,
-        row.acquisition_value
+        row.ui
       ),
       React.createElement(
         'td',
@@ -203,11 +270,7 @@ function Table(props) {
   });
   return React.createElement(
     'div',
-    { style: {
-        position: 'absolute',
-        top: searchBarHeight + 'px',
-        width: '100%'
-      } },
+    { style: tableStyle },
     React.createElement(
       'table',
       { style: {
@@ -239,12 +302,12 @@ function Table(props) {
         React.createElement(
           'th',
           null,
-          'Unit'
+          'Value'
         ),
         React.createElement(
           'th',
           null,
-          'Value'
+          'Unit'
         ),
         React.createElement(
           'th',
@@ -261,7 +324,7 @@ function filtersToQueryParams(filters) {
   var queryParams = '?';
   var cols = Object.keys(filters);
   for (var i = 0; i < cols.length; i++) {
-    if (filters[cols[i]] == 'ALL') {
+    if (filters[cols[i]] == 'ALL' || filters[cols[i]] == null) {
       continue;
     }
     queryParams += cols[i] + '=' + filters[cols[i]];

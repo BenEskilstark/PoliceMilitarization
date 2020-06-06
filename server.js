@@ -2,7 +2,6 @@
 const http = require('http');
 const fs = require('fs');
 const urlParser = require('url');
-// const sqlite3 = require('sqlite3').verbose();
 const {Client} = require('pg');
 
 const port = process.env.PORT || 8000;
@@ -50,7 +49,7 @@ const server = http.createServer(function(request, response) {
            state, station_name, item_name, quantity, ui, acquisition_value, ship_date
            FROM police`,
           query,
-          'ship_date',
+          'station_name',
         );
       }
       break;
@@ -87,7 +86,6 @@ const executeQueryAndSendResponse = (response, selectStr, filterObj, orderBy) =>
     filterStr += ` ORDER BY ${orderBy} ASC`;
   }
 
-  // executeSqliteQuery(response, selectStr, filterStr);
   executePostgresQuery(response, selectStr, filterStr);
 }
 
@@ -103,6 +101,7 @@ const executePostgresQuery = (response, selectStr, filterStr) => {
   const client = new Client(settings);
   const SQLStr = `${selectStr} ${filterStr}`;
   client.connect();
+  client.query('SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;', () => {});
   client.query(
     SQLStr,
     (err, res) => {
@@ -118,30 +117,6 @@ const executePostgresQuery = (response, selectStr, filterStr) => {
       client.end();
     },
   );
-};
-
-const executeSqliteQuery = (response, selectStr, filterStr) => {
-  const db = new sqlite3.Database(
-    './sql_scripts/testdb', sqlite3.OPEN_READONLY,
-    (err) => {err != null ? console.error(err) : null},
-  );
-
-  db.serialize(() => {
-    db.all(
-      `${selectStr} ${filterStr}`,
-      (err, rows) => {
-        if (err) {
-          console.error(err);
-          response.end();
-          return;
-        }
-        response.write(JSON.stringify({rows: rows}));
-        response.end();
-      },
-    );
-  });
-
-  db.close();
 };
 
 
