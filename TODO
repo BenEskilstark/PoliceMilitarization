@@ -13,7 +13,6 @@
 
 - - - - - NICE TO HAVE - - - - - -
   - put query params in the URI so that you can send the page as a link
-  - metrics around page loads/distinct users
   - text search in the dropdowns
   - sorting columns
   - do I need a derived sql table that merges otherwise-duplicate rows?

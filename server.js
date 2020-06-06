@@ -6,9 +6,6 @@ const {Client} = require('pg');
 
 const port = process.env.PORT || 8000;
 
-/**
- * request.url: string like / or /someDirectory
- */
 const server = http.createServer(function(request, response) {
   const url = request.url;
   console.log("requesting", url);
@@ -17,6 +14,7 @@ const server = http.createServer(function(request, response) {
       response.writeHead(200, {'Content-Type': 'text/html'});
       response.write(data);
       response.end();
+      setVisit();
     });
     return;
   }
@@ -86,17 +84,11 @@ const executeQueryAndSendResponse = (response, selectStr, filterObj, orderBy) =>
     filterStr += ` ORDER BY ${orderBy} ASC`;
   }
 
-  executePostgresQuery(response, selectStr, filterStr);
-}
-
-const executePostgresQuery = (response, selectStr, filterStr) => {
   const settings = port == 8000
     ? {database: 'postgres'}
     : {
         connectionString: process.env.DATABASE_URL,
-        ssl: {
-          rejectUnauthorized: false
-        },
+        ssl: {rejectUnauthorized: false},
     };
   const client = new Client(settings);
   const SQLStr = `${selectStr} ${filterStr}`;
@@ -114,6 +106,25 @@ const executePostgresQuery = (response, selectStr, filterStr) => {
       console.log('returning ' + res.rows.length + ' rows for query: ' + SQLStr);
       response.write(JSON.stringify({rows: res.rows}));
       response.end();
+      client.end();
+    },
+  );
+}
+
+const setVisit = () => {
+  const settings = port == 8000
+    ? {database: 'postgres'}
+    : {
+        connectionString: process.env.DATABASE_URL,
+        ssl: {rejectUnauthorized: false},
+    };
+  const client = new Client(settings);
+  client.connect();
+  client.query(
+    `UPDATE visits
+     SET num_visits = num_visits + 1, last_visited = current_timestamp
+     WHERE site='police_militarization'`,
+    (err, res) => {
       client.end();
     },
   );
