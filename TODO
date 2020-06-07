@@ -1,12 +1,10 @@
 
 - - - - - - TODO - - - - - -
-  - text search in the dropdowns
-    - if this works well, don't need to reload subset of items -- can
-      just load them all and expect people to search
 
 
 - - - - - BUGS - - - - - -
   - react complains about lack of keys
+    - this probably hurts performance a lot when there are many rows on the page
   - AMADOR COUNTY SHERIFF'S OFFICE has a SQL injection bug at the apostrophe
 
 

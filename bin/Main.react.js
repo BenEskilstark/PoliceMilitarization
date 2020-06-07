@@ -10,6 +10,7 @@ var React = require('react');
 var Button = require('./ui/Button.react');
 var Divider = require('./ui/Divider.react');
 var Dropdown = require('./ui/Dropdown.react');
+var SearchableDropdown = require('./ui/SearchableDropdown.react');
 var Table = require('./ui/Table.react');
 var useEffect = React.useEffect,
     useMemo = React.useMemo,
@@ -19,6 +20,12 @@ var useEffect = React.useEffect,
 var headerStyle = {
   textAlign: 'center'
   // backgroundColor: 'lightgray',
+};
+var searchBox = {
+  width: 'fit-content',
+  border: '1px solid black',
+  boxShadow: '0 1px #555555',
+  padding: '4px'
 };
 var queryStyle = {
   top: 0,
@@ -129,6 +136,7 @@ function Main(props) {
   // load list of items whenever selected state or station changes
   useEffect(function () {
     if (filters.state == null || stations == null) return;
+    if (filters.station_name != 'ALL' && !stations.includes(filters.station_name)) return;
     var queryParams = filtersToQueryParams(_extends({}, filters, { item_name: null }));
     getFromServer('/distinct/item_name' + queryParams, function (resp) {
       var rows = JSON.parse(resp).rows;
@@ -210,42 +218,94 @@ function Main(props) {
     React.createElement(
       'div',
       { style: queryStyle, id: 'search' },
-      'State:',
-      React.createElement(Dropdown, {
-        options: ['ALL'].concat(_toConsumableArray(states)),
-        selected: filters.state,
-        onChange: function onChange(nextState) {
-          setFilters(_extends({}, filters, { state: nextState }));
-        }
-      }),
-      'Station:',
-      React.createElement(Dropdown, {
-        options: ['ALL'].concat(_toConsumableArray(stations)),
-        selected: filters.station_name,
-        onChange: function onChange(nextStation) {
-          setFilters(_extends({}, filters, { station_name: nextStation }));
-        }
-      }),
-      'Equipment Type:',
-      React.createElement(Dropdown, {
-        options: ['ALL'].concat(_toConsumableArray(items)),
-        selected: filters.item_name,
-        onChange: function onChange(nextItem) {
-          setFilters(_extends({}, filters, { item_name: nextItem }));
-        }
-      }),
-      React.createElement(Button, {
-        label: 'Search',
-        onClick: function onClick() {
-          var queryParams = filtersToQueryParams(filters);
-          var queryStr = '/query/police' + queryParams;
-          getFromServer(queryStr, function (res) {
-            setQueryResult(JSON.parse(res));
-          });
-          var newURL = window.location.origin + window.location.pathname + queryParams;
-          window.history.pushState({ path: newURL }, '', newURL);
-        }
-      }),
+      React.createElement(
+        'div',
+        { style: searchBox },
+        React.createElement(
+          'div',
+          null,
+          React.createElement(
+            'b',
+            null,
+            'Search Terms:'
+          )
+        ),
+        'State:',
+        React.createElement(Dropdown, {
+          options: ['ALL'].concat(_toConsumableArray(states)),
+          selected: filters.state,
+          onChange: function onChange(nextState) {
+            setFilters(_extends({}, filters, { state: nextState }));
+          }
+        }),
+        'Station:',
+        React.createElement(Dropdown, {
+          options: ['ALL'].concat(_toConsumableArray(stations)),
+          selected: filters.station_name,
+          onChange: function onChange(nextStation) {
+            setFilters(_extends({}, filters, { station_name: nextStation }));
+          }
+        }),
+        'Equipment Type:',
+        React.createElement(Dropdown, {
+          options: ['ALL'].concat(_toConsumableArray(items)),
+          selected: filters.item_name,
+          onChange: function onChange(nextItem) {
+            setFilters(_extends({}, filters, { item_name: nextItem }));
+          }
+        }),
+        React.createElement(
+          'div',
+          null,
+          React.createElement(Button, {
+            label: 'Search',
+            style: { width: 200 },
+            fontSize: 24,
+            onClick: function onClick() {
+              var queryParams = filtersToQueryParams(filters);
+              var queryStr = '/query/police' + queryParams;
+              getFromServer(queryStr, function (res) {
+                setQueryResult(JSON.parse(res));
+              });
+              var newURL = window.location.origin + window.location.pathname + queryParams;
+              window.history.pushState({ path: newURL }, '', newURL);
+            }
+          })
+        )
+      ),
+      React.createElement(
+        'div',
+        null,
+        React.createElement(
+          'b',
+          null,
+          'Options search: '
+        ),
+        'State:',
+        React.createElement(SearchableDropdown, {
+          options: ['ALL'].concat(_toConsumableArray(states)),
+          selected: filters.state,
+          onChange: function onChange(nextState) {
+            setFilters(_extends({}, filters, { state: nextState }));
+          }
+        }),
+        'Station:',
+        React.createElement(SearchableDropdown, {
+          options: ['ALL'].concat(_toConsumableArray(stations)),
+          selected: filters.station_name,
+          onChange: function onChange(nextStation) {
+            setFilters(_extends({}, filters, { station_name: nextStation }));
+          }
+        }),
+        'Equipment Type:',
+        React.createElement(SearchableDropdown, {
+          options: ['ALL'].concat(_toConsumableArray(items)),
+          selected: filters.item_name,
+          onChange: function onChange(nextItem) {
+            setFilters(_extends({}, filters, { item_name: nextItem }));
+          }
+        })
+      ),
       React.createElement(
         'div',
         null,

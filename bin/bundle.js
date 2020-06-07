@@ -11,6 +11,7 @@ var React = require('react');
 var Button = require('./ui/Button.react');
 var Divider = require('./ui/Divider.react');
 var Dropdown = require('./ui/Dropdown.react');
+var SearchableDropdown = require('./ui/SearchableDropdown.react');
 var Table = require('./ui/Table.react');
 var useEffect = React.useEffect,
     useMemo = React.useMemo,
@@ -20,6 +21,12 @@ var useEffect = React.useEffect,
 var headerStyle = {
   textAlign: 'center'
   // backgroundColor: 'lightgray',
+};
+var searchBox = {
+  width: 'fit-content',
+  border: '1px solid black',
+  boxShadow: '0 1px #555555',
+  padding: '4px'
 };
 var queryStyle = {
   top: 0,
@@ -130,6 +137,7 @@ function Main(props) {
   // load list of items whenever selected state or station changes
   useEffect(function () {
     if (filters.state == null || stations == null) return;
+    if (filters.station_name != 'ALL' && !stations.includes(filters.station_name)) return;
     var queryParams = filtersToQueryParams(_extends({}, filters, { item_name: null }));
     getFromServer('/distinct/item_name' + queryParams, function (resp) {
       var rows = JSON.parse(resp).rows;
@@ -211,42 +219,94 @@ function Main(props) {
     React.createElement(
       'div',
       { style: queryStyle, id: 'search' },
-      'State:',
-      React.createElement(Dropdown, {
-        options: ['ALL'].concat(_toConsumableArray(states)),
-        selected: filters.state,
-        onChange: function onChange(nextState) {
-          setFilters(_extends({}, filters, { state: nextState }));
-        }
-      }),
-      'Station:',
-      React.createElement(Dropdown, {
-        options: ['ALL'].concat(_toConsumableArray(stations)),
-        selected: filters.station_name,
-        onChange: function onChange(nextStation) {
-          setFilters(_extends({}, filters, { station_name: nextStation }));
-        }
-      }),
-      'Equipment Type:',
-      React.createElement(Dropdown, {
-        options: ['ALL'].concat(_toConsumableArray(items)),
-        selected: filters.item_name,
-        onChange: function onChange(nextItem) {
-          setFilters(_extends({}, filters, { item_name: nextItem }));
-        }
-      }),
-      React.createElement(Button, {
-        label: 'Search',
-        onClick: function onClick() {
-          var queryParams = filtersToQueryParams(filters);
-          var queryStr = '/query/police' + queryParams;
-          getFromServer(queryStr, function (res) {
-            setQueryResult(JSON.parse(res));
-          });
-          var newURL = window.location.origin + window.location.pathname + queryParams;
-          window.history.pushState({ path: newURL }, '', newURL);
-        }
-      }),
+      React.createElement(
+        'div',
+        { style: searchBox },
+        React.createElement(
+          'div',
+          null,
+          React.createElement(
+            'b',
+            null,
+            'Search Terms:'
+          )
+        ),
+        'State:',
+        React.createElement(Dropdown, {
+          options: ['ALL'].concat(_toConsumableArray(states)),
+          selected: filters.state,
+          onChange: function onChange(nextState) {
+            setFilters(_extends({}, filters, { state: nextState }));
+          }
+        }),
+        'Station:',
+        React.createElement(Dropdown, {
+          options: ['ALL'].concat(_toConsumableArray(stations)),
+          selected: filters.station_name,
+          onChange: function onChange(nextStation) {
+            setFilters(_extends({}, filters, { station_name: nextStation }));
+          }
+        }),
+        'Equipment Type:',
+        React.createElement(Dropdown, {
+          options: ['ALL'].concat(_toConsumableArray(items)),
+          selected: filters.item_name,
+          onChange: function onChange(nextItem) {
+            setFilters(_extends({}, filters, { item_name: nextItem }));
+          }
+        }),
+        React.createElement(
+          'div',
+          null,
+          React.createElement(Button, {
+            label: 'Search',
+            style: { width: 200 },
+            fontSize: 24,
+            onClick: function onClick() {
+              var queryParams = filtersToQueryParams(filters);
+              var queryStr = '/query/police' + queryParams;
+              getFromServer(queryStr, function (res) {
+                setQueryResult(JSON.parse(res));
+              });
+              var newURL = window.location.origin + window.location.pathname + queryParams;
+              window.history.pushState({ path: newURL }, '', newURL);
+            }
+          })
+        )
+      ),
+      React.createElement(
+        'div',
+        null,
+        React.createElement(
+          'b',
+          null,
+          'Options search: '
+        ),
+        'State:',
+        React.createElement(SearchableDropdown, {
+          options: ['ALL'].concat(_toConsumableArray(states)),
+          selected: filters.state,
+          onChange: function onChange(nextState) {
+            setFilters(_extends({}, filters, { state: nextState }));
+          }
+        }),
+        'Station:',
+        React.createElement(SearchableDropdown, {
+          options: ['ALL'].concat(_toConsumableArray(stations)),
+          selected: filters.station_name,
+          onChange: function onChange(nextStation) {
+            setFilters(_extends({}, filters, { station_name: nextStation }));
+          }
+        }),
+        'Equipment Type:',
+        React.createElement(SearchableDropdown, {
+          options: ['ALL'].concat(_toConsumableArray(items)),
+          selected: filters.item_name,
+          onChange: function onChange(nextItem) {
+            setFilters(_extends({}, filters, { item_name: nextItem }));
+          }
+        })
+      ),
       React.createElement(
         'div',
         null,
@@ -336,7 +396,7 @@ function getFromServer(url, callback) {
 }
 
 module.exports = Main;
-},{"./ui/Button.react":3,"./ui/Divider.react":4,"./ui/Dropdown.react":5,"./ui/Table.react":6,"react":18}],2:[function(require,module,exports){
+},{"./ui/Button.react":3,"./ui/Divider.react":4,"./ui/Dropdown.react":5,"./ui/SearchableDropdown.react":6,"./ui/Table.react":7,"react":19}],2:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -348,7 +408,7 @@ function renderUI() {
 }
 
 renderUI();
-},{"./Main.react":1,"react":18,"react-dom":15}],3:[function(require,module,exports){
+},{"./Main.react":1,"react":19,"react-dom":16}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -420,7 +480,7 @@ var Button = function (_React$Component) {
 }(React.Component);
 
 module.exports = Button;
-},{"React":9}],4:[function(require,module,exports){
+},{"React":10}],4:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -436,7 +496,7 @@ function Divider(props) {
 }
 
 module.exports = Divider;
-},{"react":18}],5:[function(require,module,exports){
+},{"react":19}],5:[function(require,module,exports){
 'use strict';
 
 var React = require('React');
@@ -477,7 +537,54 @@ var Dropdown = function Dropdown(props) {
 };
 
 module.exports = Dropdown;
-},{"React":9}],6:[function(require,module,exports){
+},{"React":10}],6:[function(require,module,exports){
+'use strict';
+
+var React = require('React');
+
+/**
+ * Props:
+ * options: Array<string>
+ * displayOptions: ?Array<string>
+ * selected: string // which option is selected
+ * onChange: (string) => void
+ */
+var SearchableDropdown = function SearchableDropdown(props) {
+  var options = props.options,
+      selected = props.selected,
+      _onChange = props.onChange,
+      displayOptions = props.displayOptions;
+
+  var optionTags = options.map(function (option, i) {
+    var label = displayOptions != null && displayOptions[i] != null ? displayOptions[i] : option;
+    return React.createElement(
+      'option',
+      { key: 'option_' + option, value: option },
+      label
+    );
+  });
+
+  return React.createElement(
+    'span',
+    null,
+    React.createElement('input', {
+      list: "dropdown_" + _onChange,
+      onChange: function onChange(ev) {
+        var val = ev.target.value;
+        _onChange(val);
+      },
+      value: selected
+    }),
+    React.createElement(
+      'datalist',
+      { id: "dropdown_" + _onChange },
+      optionTags
+    )
+  );
+};
+
+module.exports = SearchableDropdown;
+},{"React":10}],7:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -589,7 +696,7 @@ function Table(props) {
 }
 
 module.exports = Table;
-},{"./Button.react":3,"react":18}],7:[function(require,module,exports){
+},{"./Button.react":3,"react":19}],8:[function(require,module,exports){
 (function (process){
 /** @license React v16.13.1
  * react.development.js
@@ -2505,7 +2612,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this,require('_process'))
-},{"_process":25,"object-assign":10,"prop-types/checkPropTypes":11}],8:[function(require,module,exports){
+},{"_process":26,"object-assign":11,"prop-types/checkPropTypes":12}],9:[function(require,module,exports){
 /** @license React v16.13.1
  * react.production.min.js
  *
@@ -2532,7 +2639,7 @@ key:d,ref:g,props:e,_owner:k}};exports.createContext=function(a,b){void 0===b&&(
 exports.lazy=function(a){return{$$typeof:A,_ctor:a,_status:-1,_result:null}};exports.memo=function(a,b){return{$$typeof:z,type:a,compare:void 0===b?null:b}};exports.useCallback=function(a,b){return Z().useCallback(a,b)};exports.useContext=function(a,b){return Z().useContext(a,b)};exports.useDebugValue=function(){};exports.useEffect=function(a,b){return Z().useEffect(a,b)};exports.useImperativeHandle=function(a,b,c){return Z().useImperativeHandle(a,b,c)};
 exports.useLayoutEffect=function(a,b){return Z().useLayoutEffect(a,b)};exports.useMemo=function(a,b){return Z().useMemo(a,b)};exports.useReducer=function(a,b,c){return Z().useReducer(a,b,c)};exports.useRef=function(a){return Z().useRef(a)};exports.useState=function(a){return Z().useState(a)};exports.version="16.13.1";
 
-},{"object-assign":10}],9:[function(require,module,exports){
+},{"object-assign":11}],10:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -2543,7 +2650,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this,require('_process'))
-},{"./cjs/react.development.js":7,"./cjs/react.production.min.js":8,"_process":25}],10:[function(require,module,exports){
+},{"./cjs/react.development.js":8,"./cjs/react.production.min.js":9,"_process":26}],11:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -2635,7 +2742,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 (function (process){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
@@ -2741,7 +2848,7 @@ checkPropTypes.resetWarningCache = function() {
 module.exports = checkPropTypes;
 
 }).call(this,require('_process'))
-},{"./lib/ReactPropTypesSecret":12,"_process":25}],12:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":13,"_process":26}],13:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -2755,7 +2862,7 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 module.exports = ReactPropTypesSecret;
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 (function (process){
 /** @license React v16.13.1
  * react-dom.development.js
@@ -27771,7 +27878,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this,require('_process'))
-},{"_process":25,"object-assign":10,"prop-types/checkPropTypes":11,"react":18,"scheduler":23,"scheduler/tracing":24}],14:[function(require,module,exports){
+},{"_process":26,"object-assign":11,"prop-types/checkPropTypes":12,"react":19,"scheduler":24,"scheduler/tracing":25}],15:[function(require,module,exports){
 /** @license React v16.13.1
  * react-dom.production.min.js
  *
@@ -28065,7 +28172,7 @@ exports.flushSync=function(a,b){if((W&(fj|gj))!==V)throw Error(u(187));var c=W;W
 exports.unmountComponentAtNode=function(a){if(!gk(a))throw Error(u(40));return a._reactRootContainer?(Nj(function(){ik(null,null,a,!1,function(){a._reactRootContainer=null;a[Od]=null})}),!0):!1};exports.unstable_batchedUpdates=Mj;exports.unstable_createPortal=function(a,b){return kk(a,b,2<arguments.length&&void 0!==arguments[2]?arguments[2]:null)};
 exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!gk(c))throw Error(u(200));if(null==a||void 0===a._reactInternalFiber)throw Error(u(38));return ik(a,b,c,!1,d)};exports.version="16.13.1";
 
-},{"object-assign":10,"react":18,"scheduler":23}],15:[function(require,module,exports){
+},{"object-assign":11,"react":19,"scheduler":24}],16:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -28107,13 +28214,13 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this,require('_process'))
-},{"./cjs/react-dom.development.js":13,"./cjs/react-dom.production.min.js":14,"_process":25}],16:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"_process":25,"dup":7,"object-assign":10,"prop-types/checkPropTypes":11}],17:[function(require,module,exports){
+},{"./cjs/react-dom.development.js":14,"./cjs/react-dom.production.min.js":15,"_process":26}],17:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8,"object-assign":10}],18:[function(require,module,exports){
+},{"_process":26,"dup":8,"object-assign":11,"prop-types/checkPropTypes":12}],18:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
-},{"./cjs/react.development.js":16,"./cjs/react.production.min.js":17,"_process":25,"dup":9}],19:[function(require,module,exports){
+},{"dup":9,"object-assign":11}],19:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"./cjs/react.development.js":17,"./cjs/react.production.min.js":18,"_process":26,"dup":10}],20:[function(require,module,exports){
 (function (process){
 /** @license React v0.19.1
  * scheduler-tracing.development.js
@@ -28466,7 +28573,7 @@ exports.unstable_wrap = unstable_wrap;
 }
 
 }).call(this,require('_process'))
-},{"_process":25}],20:[function(require,module,exports){
+},{"_process":26}],21:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler-tracing.production.min.js
  *
@@ -28478,7 +28585,7 @@ exports.unstable_wrap = unstable_wrap;
 
 'use strict';var b=0;exports.__interactionsRef=null;exports.__subscriberRef=null;exports.unstable_clear=function(a){return a()};exports.unstable_getCurrent=function(){return null};exports.unstable_getThreadID=function(){return++b};exports.unstable_subscribe=function(){};exports.unstable_trace=function(a,d,c){return c()};exports.unstable_unsubscribe=function(){};exports.unstable_wrap=function(a){return a};
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 (function (process){
 /** @license React v0.19.1
  * scheduler.development.js
@@ -29340,7 +29447,7 @@ exports.unstable_wrapCallback = unstable_wrapCallback;
 }
 
 }).call(this,require('_process'))
-},{"_process":25}],22:[function(require,module,exports){
+},{"_process":26}],23:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler.production.min.js
  *
@@ -29363,7 +29470,7 @@ exports.unstable_getCurrentPriorityLevel=function(){return R};exports.unstable_g
 exports.unstable_scheduleCallback=function(a,b,c){var d=exports.unstable_now();if("object"===typeof c&&null!==c){var e=c.delay;e="number"===typeof e&&0<e?d+e:d;c="number"===typeof c.timeout?c.timeout:Y(a)}else c=Y(a),e=d;c=e+c;a={id:P++,callback:b,priorityLevel:a,startTime:e,expirationTime:c,sortIndex:-1};e>d?(a.sortIndex=e,J(O,a),null===L(N)&&a===L(O)&&(U?h():U=!0,g(W,e-d))):(a.sortIndex=c,J(N,a),T||S||(T=!0,f(X)));return a};
 exports.unstable_shouldYield=function(){var a=exports.unstable_now();V(a);var b=L(N);return b!==Q&&null!==Q&&null!==b&&null!==b.callback&&b.startTime<=a&&b.expirationTime<Q.expirationTime||k()};exports.unstable_wrapCallback=function(a){var b=R;return function(){var c=R;R=b;try{return a.apply(this,arguments)}finally{R=c}}};
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -29374,7 +29481,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this,require('_process'))
-},{"./cjs/scheduler.development.js":21,"./cjs/scheduler.production.min.js":22,"_process":25}],24:[function(require,module,exports){
+},{"./cjs/scheduler.development.js":22,"./cjs/scheduler.production.min.js":23,"_process":26}],25:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -29385,7 +29492,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this,require('_process'))
-},{"./cjs/scheduler-tracing.development.js":19,"./cjs/scheduler-tracing.production.min.js":20,"_process":25}],25:[function(require,module,exports){
+},{"./cjs/scheduler-tracing.development.js":20,"./cjs/scheduler-tracing.production.min.js":21,"_process":26}],26:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 

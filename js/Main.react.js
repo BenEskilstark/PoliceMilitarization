@@ -4,6 +4,7 @@ const React = require('react');
 const Button = require('./ui/Button.react');
 const Divider = require('./ui/Divider.react');
 const Dropdown = require('./ui/Dropdown.react');
+const SearchableDropdown = require('./ui/SearchableDropdown.react');
 const Table = require('./ui/Table.react');
 const {useEffect, useMemo, useState} = React;
 
@@ -12,6 +13,12 @@ type Props = {};
 const headerStyle = {
   textAlign: 'center',
   // backgroundColor: 'lightgray',
+};
+const searchBox = {
+  width: 'fit-content',
+  border: '1px solid black',
+  boxShadow: '0 1px #555555',
+  padding: '4px',
 };
 const queryStyle = {
   top: 0,
@@ -78,6 +85,7 @@ function Main(props: Props): React.Node {
   // load list of items whenever selected state or station changes
   useEffect(() => {
     if (filters.state == null || stations == null) return;
+    if (filters.station_name != 'ALL' && !stations.includes(filters.station_name)) return;
     const queryParams = filtersToQueryParams({...filters, item_name: null});
     getFromServer(`/distinct/item_name${queryParams}`, (resp) => {
       const rows = JSON.parse(resp).rows;
@@ -142,42 +150,76 @@ function Main(props: Props): React.Node {
         </h3>
       </div>
       <div style={queryStyle} id="search">
-        State:
-        <Dropdown
-          options={['ALL', ...states]}
-          selected={filters.state}
-          onChange={(nextState) => {
-            setFilters({...filters, state: nextState});
-          }}
-        />
-        Station:
-        <Dropdown
-          options={['ALL', ...stations]}
-          selected={filters.station_name}
-          onChange={(nextStation) => {
-            setFilters({...filters, station_name: nextStation});
-          }}
-        />
-        Equipment Type:
-        <Dropdown
-          options={['ALL', ...items]}
-          selected={filters.item_name}
-          onChange={(nextItem) => {
-            setFilters({...filters, item_name: nextItem});
-          }}
-        />
-        <Button
-          label="Search"
-          onClick={() => {
-            const queryParams = filtersToQueryParams(filters);
-            const queryStr = '/query/police' + queryParams;
-            getFromServer(queryStr, (res) => {
-              setQueryResult(JSON.parse(res));
-            });
-            const newURL = window.location.origin + window.location.pathname + queryParams;
-            window.history.pushState({path: newURL}, '', newURL);
-          }}
-        />
+        <div style={searchBox}>
+          <div><b>Search Terms:</b></div>
+          State:
+          <Dropdown
+            options={['ALL', ...states]}
+            selected={filters.state}
+            onChange={(nextState) => {
+              setFilters({...filters, state: nextState});
+            }}
+          />
+          Station:
+          <Dropdown
+            options={['ALL', ...stations]}
+            selected={filters.station_name}
+            onChange={(nextStation) => {
+              setFilters({...filters, station_name: nextStation});
+            }}
+          />
+          Equipment Type:
+          <Dropdown
+            options={['ALL', ...items]}
+            selected={filters.item_name}
+            onChange={(nextItem) => {
+              setFilters({...filters, item_name: nextItem});
+            }}
+          />
+          <div>
+            <Button
+              label="Search"
+              style={{width: 200}}
+              fontSize={24}
+              onClick={() => {
+                const queryParams = filtersToQueryParams(filters);
+                const queryStr = '/query/police' + queryParams;
+                getFromServer(queryStr, (res) => {
+                  setQueryResult(JSON.parse(res));
+                });
+                const newURL = window.location.origin + window.location.pathname + queryParams;
+                window.history.pushState({path: newURL}, '', newURL);
+              }}
+            />
+          </div>
+        </div>
+        <div>
+          <b>Options search: </b>
+          State:
+          <SearchableDropdown
+            options={['ALL', ...states]}
+            selected={filters.state}
+            onChange={(nextState) => {
+              setFilters({...filters, state: nextState});
+            }}
+          />
+          Station:
+          <SearchableDropdown
+            options={['ALL', ...stations]}
+            selected={filters.station_name}
+            onChange={(nextStation) => {
+              setFilters({...filters, station_name: nextStation});
+            }}
+          />
+          Equipment Type:
+          <SearchableDropdown
+            options={['ALL', ...items]}
+            selected={filters.item_name}
+            onChange={(nextItem) => {
+              setFilters({...filters, item_name: nextItem});
+            }}
+          />
+        </div>
         <div>
           Total Rows Returned: <b>{numRows}</b>
         </div>
