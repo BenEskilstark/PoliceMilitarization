@@ -1,20 +1,16 @@
 
 - - - - - - TODO - - - - - -
-  - standalone URL
-  - list number of rows (/total quantity?) alongside equipment value
+  - text search in the dropdowns
+    - if this works well, don't need to reload subset of items -- can
+      just load them all and expect people to search
 
 
 - - - - - BUGS - - - - - -
-  - switching between states when item is selected returns no data
-  - remove useless "12:00:00 AM" from all the ship dates
   - react complains about lack of keys
-  - DOM complains about bad table nesting
+  - AMADOR COUNTY SHERIFF'S OFFICE has a SQL injection bug at the apostrophe
 
 
 - - - - - NICE TO HAVE - - - - - -
-  - put query params in the URI so that you can send the page as a link
-  - text search in the dropdowns
-  - sorting columns
   - do I need a derived sql table that merges otherwise-duplicate rows?
   - query by date ranges
   - scripting for updating db

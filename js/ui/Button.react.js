@@ -7,6 +7,7 @@ const React = require('React');
 // onMouseDown: optional () => void
 // onMouseUp: optional () => void
 // disabled: optional boolean
+// fontSize: optional number
 // style: optional Object
 
 class Button extends React.Component {
@@ -23,7 +24,7 @@ class Button extends React.Component {
       <button type="button"
         style={{
           touchAction: 'initial',
-          fontSize: '18px',
+          fontSize: (props.fontSize != null ? props.fontSize : 18) + 'px',
           ...props.style,
         }}
         key={id || label}

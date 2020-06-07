@@ -10,6 +10,7 @@ var React = require('react');
 var Button = require('./ui/Button.react');
 var Divider = require('./ui/Divider.react');
 var Dropdown = require('./ui/Dropdown.react');
+var Table = require('./ui/Table.react');
 var useEffect = React.useEffect,
     useMemo = React.useMemo,
     useState = React.useState;
@@ -29,10 +30,6 @@ var queryStyle = {
   borderBottom: '1px solid black',
   boxShadow: '0 1px #555555',
   zIndex: 1
-};
-var tableStyle = {
-  backgroundColor: '#faf8ef',
-  width: '100%'
 };
 
 function Main(props) {
@@ -72,9 +69,49 @@ function Main(props) {
       filters = _useState8[0],
       setFilters = _useState8[1];
 
+  // after states are loaded, do a check for URL params
+
+
+  useEffect(function () {
+    if (states.length == 0) return;
+    if (window.location.search != '') {
+      var queryStr = '/query/police' + window.location.search;
+      getFromServer(queryStr, function (res) {
+        setQueryResult(JSON.parse(res));
+      });
+      // set filters to match URL
+      var params = new URLSearchParams(window.location.search);
+      var newFilters = {};
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = params.keys()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var key = _step.value;
+
+          newFilters[key] = params.get(key);
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      setFilters(newFilters);
+    }
+  }, [states]);
+
   // load list of stations whenever selected state changes
-
-
   useEffect(function () {
     if (filters.state == null) return;
     getFromServer('/distinct/station_name?state=' + filters.state, function (resp) {
@@ -83,13 +120,15 @@ function Main(props) {
         return obj.station_name;
       });
       setStations(stations);
-      setFilters(_extends({}, filters, { station_name: stations[0] }));
+      if (!stations.includes(filters.station_name)) {
+        setFilters(_extends({}, filters, { station_name: stations[0] }));
+      }
     });
   }, [filters.state]);
 
   // load list of items whenever selected state or station changes
   useEffect(function () {
-    if (filters.state == null) return;
+    if (filters.state == null || stations == null) return;
     var queryParams = filtersToQueryParams(_extends({}, filters, { item_name: null }));
     getFromServer('/distinct/item_name' + queryParams, function (resp) {
       var rows = JSON.parse(resp).rows;
@@ -97,6 +136,9 @@ function Main(props) {
         return obj.item_name;
       });
       setItems(items);
+      if (filters.item_name != 'ALL' && !items.includes(filters.item_name)) {
+        setFilters(_extends({}, filters, { item_name: 'ALL' }));
+      }
     });
   }, [filters.state, filters.station_name]);
 
@@ -117,6 +159,10 @@ function Main(props) {
       cost += parseFloat(row.acquisition_value.slice(1).replace(/,/g, '')) * parseFloat(row.quantity.replace(/,/g, ''));
     });
     return cost;
+  }, [queryResult]);
+  var numRows = useMemo(function () {
+    if (queryResult == null || queryResult.rows == null) return 0;
+    return queryResult.rows.length;
   }, [queryResult]);
 
   return React.createElement(
@@ -192,11 +238,24 @@ function Main(props) {
         label: 'Search',
         onClick: function onClick() {
           var queryParams = filtersToQueryParams(filters);
-          getFromServer('/query/police' + queryParams, function (res) {
+          var queryStr = '/query/police' + queryParams;
+          getFromServer(queryStr, function (res) {
             setQueryResult(JSON.parse(res));
           });
+          var newURL = window.location.origin + window.location.pathname + queryParams;
+          window.history.pushState({ path: newURL }, '', newURL);
         }
       }),
+      React.createElement(
+        'div',
+        null,
+        'Total Rows Returned: ',
+        React.createElement(
+          'b',
+          null,
+          numRows
+        )
+      ),
       React.createElement(
         'div',
         null,
@@ -209,114 +268,46 @@ function Main(props) {
         )
       )
     ),
-    React.createElement(Table, { queryResult: queryResult })
+    React.createElement(EquipmentTable, { queryResult: queryResult })
   );
 }
 
-function Table(props) {
+function EquipmentTable(props) {
   var queryResult = props.queryResult;
 
   if (queryResult == null || queryResult.rows == null) {
     return null;
   }
-
-  // derive positioning
-  var rect = document.getElementById('search').getBoundingClientRect();
-  var searchBarOffset = rect.top + rect.height;
-
-  var rows = queryResult.rows;
-
-  var rowHTML = rows.map(function (row) {
-    return React.createElement(
-      'tr',
-      null,
-      React.createElement(
-        'td',
-        null,
-        row.state
-      ),
-      React.createElement(
-        'td',
-        null,
-        row.station_name
-      ),
-      React.createElement(
-        'td',
-        null,
-        row.item_name
-      ),
-      React.createElement(
-        'td',
-        null,
-        row.quantity
-      ),
-      React.createElement(
-        'td',
-        null,
-        row.acquisition_value
-      ),
-      React.createElement(
-        'td',
-        null,
-        row.ui
-      ),
-      React.createElement(
-        'td',
-        null,
-        row.ship_date
-      )
-    );
+  var rows = queryResult.rows.map(function (row) {
+    return _extends({}, row, {
+      ship_date: row.ship_date.slice(0, -12)
+    });
   });
-  return React.createElement(
-    'div',
-    { style: tableStyle },
-    React.createElement(
-      'table',
-      { style: {
-          width: '100%'
-        } },
-      React.createElement(
-        'tr',
-        null,
-        React.createElement(
-          'th',
-          null,
-          'State'
-        ),
-        React.createElement(
-          'th',
-          null,
-          'Station Name'
-        ),
-        React.createElement(
-          'th',
-          null,
-          'Item Name'
-        ),
-        React.createElement(
-          'th',
-          null,
-          'Quantity'
-        ),
-        React.createElement(
-          'th',
-          null,
-          'Value'
-        ),
-        React.createElement(
-          'th',
-          null,
-          'Unit'
-        ),
-        React.createElement(
-          'th',
-          null,
-          'Ship Date'
-        )
-      ),
-      rowHTML
-    )
-  );
+  return React.createElement(Table, {
+    columns: {
+      state: { displayName: 'State' },
+      station_name: { displayName: 'Station Name' },
+      item_name: { displayName: 'Item Name' },
+      quantity: { displayName: 'Quantity' },
+      acquisition_value: {
+        displayName: 'Value',
+        sortFn: function sortFn(rowA, rowB) {
+          var numA = parseFloat(rowA.acquisition_value.slice(1).replace(/,/g, ''));
+          var numB = parseFloat(rowB.acquisition_value.slice(1).replace(/,/g, ''));
+          return numA - numB;
+        }
+      },
+      ui: { displayName: 'Unit' },
+      ship_date: {
+        displayName: 'Ship Date',
+        sortFn: function sortFn(rowA, rowB) {
+          return new Date(rowA.ship_date) - new Date(rowB.ship_date);
+        }
+      },
+      nsn: { displayName: 'NATO Security #' }
+    },
+    rows: rows
+  });
 }
 
 function filtersToQueryParams(filters) {
