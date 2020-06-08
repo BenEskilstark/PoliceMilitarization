@@ -19,6 +19,7 @@ var React = require('React');
 // onMouseDown: optional () => void
 // onMouseUp: optional () => void
 // disabled: optional boolean
+// fontSize: optional number
 // style: optional Object
 
 var Button = function (_React$Component) {
@@ -47,7 +48,7 @@ var Button = function (_React$Component) {
         { type: 'button',
           style: _extends({
             touchAction: 'initial',
-            fontSize: '18px'
+            fontSize: (props.fontSize != null ? props.fontSize : 18) + 'px'
           }, props.style),
           key: id || label,
           className: props.disabled ? 'buttonDisable' : '',

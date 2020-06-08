@@ -9,7 +9,7 @@ const port = process.env.PORT || 8000;
 const server = http.createServer(function(request, response) {
   const url = request.url;
   console.log("requesting", url);
-  if (url == '/') {
+  if (url == '/' || url[1] == '?') {
     fs.readFile('index.html', function(err, data) {
       response.writeHead(200, {'Content-Type': 'text/html'});
       response.write(data);
@@ -27,7 +27,7 @@ const server = http.createServer(function(request, response) {
         response.write(data);
         response.end();
       });
-      break;
+      return;
     }
     case 'css': {
       fs.readFile(dir + '/' + file, function(err, data) {
@@ -35,7 +35,7 @@ const server = http.createServer(function(request, response) {
         response.write(data);
         response.end();
       });
-      break;
+      return;
     }
     case 'query': {
       response.writeHead(200, {'Content-Type': 'application/json'});
@@ -44,13 +44,13 @@ const server = http.createServer(function(request, response) {
         executeQueryAndSendResponse(
           response,
           `SELECT
-           state, station_name, item_name, quantity, ui, acquisition_value, ship_date
+           state, station_name, item_name, quantity, ui, acquisition_value, ship_date, nsn
            FROM police`,
           query,
           'station_name',
         );
       }
-      break;
+      return;
     }
     case 'distinct': {
       response.writeHead(200, {'Content-Type': 'application/json'});
@@ -61,9 +61,10 @@ const server = http.createServer(function(request, response) {
         query,
         file,
       );
-      break;
+      return;
     }
   }
+  response.end();
 });
 
 const executeQueryAndSendResponse = (response, selectStr, filterObj, orderBy) => {

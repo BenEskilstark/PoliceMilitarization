@@ -4,6 +4,8 @@ const React = require('react');
 const Button = require('./ui/Button.react');
 const Divider = require('./ui/Divider.react');
 const Dropdown = require('./ui/Dropdown.react');
+const SearchableDropdown = require('./ui/SearchableDropdown.react');
+const Table = require('./ui/Table.react');
 const {useEffect, useMemo, useState} = React;
 
 type Props = {};
@@ -11,6 +13,12 @@ type Props = {};
 const headerStyle = {
   textAlign: 'center',
   // backgroundColor: 'lightgray',
+};
+const searchBox = {
+  width: 'fit-content',
+  border: '1px solid black',
+  boxShadow: '0 1px #555555',
+  padding: '4px',
 };
 const queryStyle = {
   top: 0,
@@ -22,10 +30,6 @@ const queryStyle = {
   borderBottom: '1px solid black',
   boxShadow: '0 1px #555555',
   zIndex: 1,
-};
-const tableStyle = {
-  backgroundColor: '#faf8ef',
-  width: '100%',
 };
 
 function Main(props: Props): React.Node {
@@ -47,6 +51,24 @@ function Main(props: Props): React.Node {
 
   const [filters, setFilters] = useState({item_name: 'ALL'});
 
+  // after states are loaded, do a check for URL params
+  useEffect(() => {
+    if (states.length == 0) return;
+    if (window.location.search != '') {
+      const queryStr = '/query/police' + window.location.search;
+      getFromServer(queryStr, (res) => {
+        setQueryResult(JSON.parse(res));
+      });
+      // set filters to match URL
+      const params = new URLSearchParams(window.location.search);
+      const newFilters = {};
+      for (const key of params.keys()) {
+        newFilters[key] = params.get(key);
+      }
+      setFilters(newFilters);
+    }
+  }, [states]);
+
   // load list of stations whenever selected state changes
   useEffect(() => {
     if (filters.state == null) return;
@@ -54,18 +76,24 @@ function Main(props: Props): React.Node {
       const rows = JSON.parse(resp).rows;
       const stations = rows.map(obj => obj.station_name);
       setStations(stations);
-      setFilters({...filters, station_name: stations[0]});
+      if (!stations.includes(filters.station_name)) {
+        setFilters({...filters, station_name: stations[0]});
+      }
     });
   }, [filters.state]);
 
   // load list of items whenever selected state or station changes
   useEffect(() => {
-    if (filters.state == null) return;
+    if (filters.state == null || stations == null) return;
+    if (filters.station_name != 'ALL' && !stations.includes(filters.station_name)) return;
     const queryParams = filtersToQueryParams({...filters, item_name: null});
     getFromServer(`/distinct/item_name${queryParams}`, (resp) => {
       const rows = JSON.parse(resp).rows;
       const items = rows.map(obj => obj.item_name);
       setItems(items);
+      if (filters.item_name != 'ALL' && !items.includes(filters.item_name)) {
+        setFilters({...filters, item_name: 'ALL'});
+      }
     });
   }, [filters.state, filters.station_name]);
 
@@ -84,6 +112,10 @@ function Main(props: Props): React.Node {
       );
     });
     return cost;
+  }, [queryResult]);
+  const numRows = useMemo(() => {
+    if (queryResult == null || queryResult.rows == null) return 0;
+    return queryResult.rows.length;
   }, [queryResult]);
 
   return (
@@ -118,89 +150,125 @@ function Main(props: Props): React.Node {
         </h3>
       </div>
       <div style={queryStyle} id="search">
-        State:
-        <Dropdown
-          options={['ALL', ...states]}
-          selected={filters.state}
-          onChange={(nextState) => {
-            setFilters({...filters, state: nextState});
-          }}
-        />
-        Station:
-        <Dropdown
-          options={['ALL', ...stations]}
-          selected={filters.station_name}
-          onChange={(nextStation) => {
-            setFilters({...filters, station_name: nextStation});
-          }}
-        />
-        Equipment Type:
-        <Dropdown
-          options={['ALL', ...items]}
-          selected={filters.item_name}
-          onChange={(nextItem) => {
-            setFilters({...filters, item_name: nextItem});
-          }}
-        />
-        <Button
-          label="Search"
-          onClick={() => {
-            const queryParams = filtersToQueryParams(filters);
-            getFromServer('/query/police' + queryParams, (res) => {
-              setQueryResult(JSON.parse(res));
-            })
-          }}
-        />
+        <div style={searchBox}>
+          <div><b>Search Terms:</b></div>
+          State:
+          <Dropdown
+            options={['ALL', ...states]}
+            selected={filters.state}
+            onChange={(nextState) => {
+              setFilters({...filters, state: nextState});
+            }}
+          />
+          Station:
+          <Dropdown
+            options={['ALL', ...stations]}
+            selected={filters.station_name}
+            onChange={(nextStation) => {
+              setFilters({...filters, station_name: nextStation});
+            }}
+          />
+          Equipment Type:
+          <Dropdown
+            options={['ALL', ...items]}
+            selected={filters.item_name}
+            onChange={(nextItem) => {
+              setFilters({...filters, item_name: nextItem});
+            }}
+          />
+          <div>
+            <Button
+              label="Search"
+              style={{width: 200}}
+              fontSize={24}
+              onClick={() => {
+                const queryParams = filtersToQueryParams(filters);
+                const queryStr = '/query/police' + queryParams;
+                getFromServer(queryStr, (res) => {
+                  setQueryResult(JSON.parse(res));
+                });
+                const newURL = window.location.origin + window.location.pathname + queryParams;
+                window.history.pushState({path: newURL}, '', newURL);
+              }}
+            />
+          </div>
+        </div>
+        <div>
+          <b>Options search: </b>
+          State:
+          <SearchableDropdown
+            options={['ALL', ...states]}
+            selected={filters.state}
+            onChange={(nextState) => {
+              setFilters({...filters, state: nextState});
+            }}
+          />
+          Station:
+          <SearchableDropdown
+            options={['ALL', ...stations]}
+            selected={filters.station_name}
+            onChange={(nextStation) => {
+              setFilters({...filters, station_name: nextStation});
+            }}
+          />
+          Equipment Type:
+          <SearchableDropdown
+            options={['ALL', ...items]}
+            selected={filters.item_name}
+            onChange={(nextItem) => {
+              setFilters({...filters, item_name: nextItem});
+            }}
+          />
+        </div>
+        <div>
+          Total Rows Returned: <b>{numRows}</b>
+        </div>
         <div>
           Total Value of Searched Equipment: <b>${totalCost.toLocaleString()}</b>
         </div>
       </div>
-      <Table queryResult={queryResult} />
+      <EquipmentTable queryResult={queryResult} />
     </div>
   );
 }
 
-function Table(props) {
+function EquipmentTable(props) {
   const {queryResult} = props;
   if (queryResult == null || queryResult.rows == null) {
     return null;
   }
-
-  // derive positioning
-  const rect = document.getElementById('search').getBoundingClientRect();
-  const searchBarOffset = rect.top + rect.height;
-
-  const {rows} = queryResult;
-  const rowHTML = rows.map(row => {
-    return (
-      <tr>
-        <td>{row.state}</td>
-        <td>{row.station_name}</td>
-        <td>{row.item_name}</td>
-        <td>{row.quantity}</td>
-        <td>{row.acquisition_value}</td>
-        <td>{row.ui}</td>
-        <td>{row.ship_date}</td>
-      </tr>
-    );
+  const rows = queryResult.rows.map(row => {
+    return {
+      ...row,
+      ship_date: row.ship_date.slice(0, -12),
+    };
   });
   return (
-    <div style={tableStyle}>
-      <table style={{
-        width: '100%',
-      }}>
-        <tr>
-          <th>State</th>
-          <th>Station Name</th>
-          <th>Item Name</th>
-          <th>Quantity</th>
-          <th>Value</th>
-          <th>Unit</th>
-          <th>Ship Date</th>
-        </tr>
-        {rowHTML}
-      </table>
-    </div>
+    <Table
+      columns={{
+        state: {displayName: 'State'},
+        station_name: {displayName: 'Station Name'},
+        item_name: {displayName: 'Item Name'},
+        quantity: {displayName: 'Quantity'},
+        acquisition_value: {
+          displayName: 'Value',
+          sortFn: (rowA, rowB) => {
+            const numA = parseFloat(rowA.acquisition_value.slice(1).replace(/,/g,''));
+            const numB = parseFloat(rowB.acquisition_value.slice(1).replace(/,/g,''));
+            return numA - numB;
+          }
+        },
+        ui: {displayName: 'Unit'},
+        ship_date: {
+          displayName: 'Ship Date',
+          sortFn: (rowA, rowB) => {
+            return new Date(rowA.ship_date) - new Date(rowB.ship_date);
+          }
+        },
+        nsn: {displayName: 'NATO Security #'},
+      }}
+      rows={rows}
+    />
   );
 }
 
